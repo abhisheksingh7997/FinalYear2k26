@@ -46,8 +46,7 @@ function Dashboard() {
         <Navbar active={activeService} setActive={setActiveService} />
 
         {/* Default AI features */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <MentalHealthTips />
+        <div className="w-full">
           <LiveDetection />
           {/* <AdminTools /> */}
         </div>
