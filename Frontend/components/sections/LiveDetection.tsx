@@ -60,6 +60,19 @@ const TIPS_DATA = [
   { title: "🎯 Set Small Goals",        desc: "Completing small tasks builds motivation and gives a sense of achievement." },
 ];
 
+const QUESTIONS = [
+  { id: "q1", title: "Emotional State", text: "How would you describe your overall mood over the past few weeks?", options: ["Very positive", "Mostly positive", "Neutral", "Mostly negative", "Very negative"] },
+  { id: "q2", title: "Work Stress", text: "How often do you feel overwhelmed by your work responsibilities?", options: ["Never", "Rarely", "Sometimes", "Often", "Very often"] },
+  { id: "q3", title: "Energy Level", text: "Do you feel mentally or physically exhausted after a typical workday?", options: ["Never", "Rarely", "Sometimes", "Often", "Always"] },
+  { id: "q4", title: "Motivation", text: "How motivated do you feel when starting your daily work tasks?", options: ["Very motivated", "Somewhat motivated", "Neutral", "Unmotivated", "Very unmotivated"] },
+  { id: "q5", title: "Sleep Quality", text: "How often does stress or work-related thinking affect your sleep?", options: ["Never", "Rarely", "Sometimes", "Often", "Always"] },
+  { id: "q6", title: "Concentration", text: "Have you found it difficult to concentrate or stay focused recently?", options: ["Never", "Rarely", "Sometimes", "Often", "Always"] },
+  { id: "q7", title: "Emotional Control", text: "How often do you feel irritated, frustrated, or emotionally overwhelmed during work?", options: ["Never", "Rarely", "Sometimes", "Often", "Always"] },
+  { id: "q8", title: "Work-Life Balance", text: "Do you feel you have enough time and energy for life outside of work?", options: ["Always", "Mostly", "Sometimes", "Rarely", "Never"] },
+  { id: "q9", title: "Social Support", text: "When you feel stressed, do you feel comfortable talking about it with someone?", options: ["Always", "Mostly", "Sometimes", "Rarely", "Never"] },
+  { id: "q10", title: "Burnout Indicator", text: "Do you feel mentally refreshed after a break or weekend?", options: ["Always", "Mostly", "Sometimes", "Rarely", "Never"] },
+];
+
 // ── Types ──────────────────────────────────────────────────────
 interface EmotionResponse {
   face_detected:       boolean;
@@ -118,11 +131,16 @@ function encodeWAV(samples: Float32Array, sampleRate: number, numChannels: numbe
 
 // ── Component ──────────────────────────────────────────────────
 export function LiveDetection() {
-  type ViewMode = "tips" | "camera" | "results";
+  type ViewMode = "tips" | "instructions" | "camera" | "results";
 
   // View
   const [viewMode,   setViewMode]  = useState<ViewMode>("tips");
   const [activeTip,  setActiveTip] = useState<number | null>(null);
+
+  // Questionnaire
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
 
   // Face state
   const [isDetecting,      setIsDetecting]      = useState(false);
@@ -270,6 +288,9 @@ export function LiveDetection() {
     setApiError(null);
     setSpeechResult(null);
     chunkIndexRef.current = 0;
+    setCurrentQuestionIndex(0);
+    setSelectedOption(null);
+    setAnswers({});
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -476,7 +497,7 @@ export function LiveDetection() {
             </div>
             <Button
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-900/20 transition-all h-12 text-lg font-medium"
-              onClick={startCamera}
+              onClick={() => setViewMode("instructions")}
             >
               <Video className="w-5 h-5 mr-2" />
               Start Live Emotion Detection
@@ -485,73 +506,190 @@ export function LiveDetection() {
         </div>
       )}
 
+      {/* ═══ INSTRUCTIONS VIEW ═══════════════════════════════════════════ */}
+      {viewMode === "instructions" && (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-300">
+          <div className="max-w-2xl bg-gray-900/50 p-8 rounded-2xl border border-gray-700/50 shadow-xl">
+            <h3 className="text-3xl font-bold text-white mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+              Assessment Instructions
+            </h3>
+            <p className="text-lg text-gray-300 mb-6 italic">
+              Welcome to the Mental Health Assessment.
+              Before you begin, please read the following instructions carefully.
+            </p>
+            <ul className="text-left text-gray-300 space-y-4 mb-8">
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <span>This assessment consists of a series of questions related to your recent experiences and emotional well-being.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <span>Each question will appear on the screen one at a time.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <span>Please read the question carefully and try to respond <strong className="text-white">within 12–15 seconds</strong>.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <span>Your <strong className="text-white">webcam and microphone may be used during the assessment</strong> to analyze facial expressions and voice patterns as part of the evaluation process.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <span>Please make sure your <strong className="text-white">face is clearly visible on the camera</strong> and that you are in a <strong className="text-white">well-lit environment</strong>.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <span>Try to answer <strong className="text-white">naturally and honestly</strong>. There are no right or wrong answers.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <span>Avoid looking away from the screen frequently during the assessment.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <span>Once you finish answering, click <strong className="text-white">Next</strong> to move to the following question.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <span>The entire assessment will take <strong className="text-white">approximately 2–3 minutes</strong> to complete.</span>
+              </li>
+            </ul>
+            <p className="text-sm text-gray-400 mt-4 mb-8">
+              * Your responses will be used only for the purpose of generating your assessment results.
+            </p>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-10 h-12 text-lg shadow-lg shadow-blue-900/20 font-medium rounded-full"
+              onClick={startCamera}
+            >
+              Start Assessment
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ═══ CAMERA VIEW ═════════════════════════════════════════ */}
       {viewMode === "camera" && (
         <div className="flex-1 flex flex-col">
-          <div
-            className="relative rounded-xl overflow-hidden border border-gray-700/50 bg-black mb-6 flex-shrink-0"
-            style={{ minHeight: "360px", aspectRatio: "16/9", maxHeight: "60vh" }}
-          >
-            <canvas ref={canvasRef} className="hidden" />
-            <video
-              ref={videoRef}
-              autoPlay muted playsInline
-              className={`w-full h-full object-cover transition-opacity duration-300 ${
-                isCameraReady ? "opacity-100" : "opacity-0"
-              }`}
-            />
+          <div className="flex flex-col md:flex-row gap-6 mb-6">
+            
+            {/* Left side: Camera View */}
+            <div
+              className="relative rounded-xl overflow-hidden border border-gray-700/50 bg-black flex-shrink-0 md:w-1/2 lg:w-3/5"
+              style={{ minHeight: "360px", aspectRatio: "16/9", maxHeight: "60vh" }}
+            >
+              <canvas ref={canvasRef} className="hidden" />
+              <video
+                ref={videoRef}
+                autoPlay muted playsInline
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                  isCameraReady ? "opacity-100" : "opacity-0"
+                }`}
+              />
 
-            {/* Face emotion — top left */}
-            {isCameraReady && faceDetected && emotion !== "unknown" && (
-              <div className="absolute top-4 left-4 z-10">
-                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-md font-semibold border backdrop-blur-sm shadow-lg ${
-                  EMOTION_BADGE[emotion] ?? EMOTION_BADGE.unknown
-                }`}>
-                  <span className="text-xl">{EMOTION_EMOJI[emotion]}</span>
-                  <span className="uppercase tracking-wide">{emotion}</span>
-                  <span className="opacity-70 bg-black/20 px-2 rounded-full ml-1">{confidence.toFixed(1)}%</span>
-                </span>
-              </div>
-            )}
-
-            {/* Speech emotion — top right */}
-            {isCameraReady && speechResult && speechResult.emotion !== "unknown" && (
-              <div className="absolute top-4 right-4 z-10">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border backdrop-blur-sm shadow-lg ${
-                  EMOTION_BADGE[speechResult.emotion] ?? EMOTION_BADGE.unknown
-                }`}>
-                  <Mic className="w-3.5 h-3.5" />
-                  <span className="uppercase tracking-wide">{speechResult.emotion}</span>
-                  <span className="opacity-70">{(speechResult.confidence * 100).toFixed(0)}%</span>
-                </span>
-              </div>
-            )}
-
-            {/* Recording indicator — bottom left */}
-            {isRecording && (
-              <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                <span className="text-xs text-red-400 font-medium">Recording speech...</span>
-              </div>
-            )}
-
-            {/* No face */}
-            {isCameraReady && !faceDetected && isDetecting && (
-              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                <div className="bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-gray-700/50 flex items-center gap-3 shadow-xl">
-                  <AlertCircle className="w-5 h-5 text-gray-400" />
-                  <span className="text-gray-300 text-sm font-medium">Position your face clearly in frame</span>
+              {/* Face emotion — top left */}
+              {isCameraReady && faceDetected && emotion !== "unknown" && (
+                <div className="absolute top-4 left-4 z-10">
+                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-md font-semibold border backdrop-blur-sm shadow-lg ${
+                    EMOTION_BADGE[emotion] ?? EMOTION_BADGE.unknown
+                  }`}>
+                    <span className="text-xl">{EMOTION_EMOJI[emotion]}</span>
+                    <span className="uppercase tracking-wide">{emotion}</span>
+                    <span className="opacity-70 bg-black/20 px-2 rounded-full ml-1">{confidence.toFixed(1)}%</span>
+                  </span>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Starting spinner */}
-            {isStartingCamera && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/90 z-20 backdrop-blur-sm">
-                <div className="w-12 h-12 rounded-full border-2 border-gray-600 border-t-blue-500 border-l-blue-500 animate-spin" />
-                <p className="text-gray-300 font-medium">Starting camera & microphone...</p>
-              </div>
-            )}
+              {/* Speech emotion — top right */}
+              {isCameraReady && speechResult && speechResult.emotion !== "unknown" && (
+                <div className="absolute top-4 right-4 z-10">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border backdrop-blur-sm shadow-lg ${
+                    EMOTION_BADGE[speechResult.emotion] ?? EMOTION_BADGE.unknown
+                  }`}>
+                    <Mic className="w-3.5 h-3.5" />
+                    <span className="uppercase tracking-wide">{speechResult.emotion}</span>
+                    <span className="opacity-70">{(speechResult.confidence * 100).toFixed(0)}%</span>
+                  </span>
+                </div>
+              )}
+
+              {/* Recording indicator — bottom left */}
+              {isRecording && (
+                <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="text-xs text-red-400 font-medium">Recording speech...</span>
+                </div>
+              )}
+
+              {/* No face */}
+              {isCameraReady && !faceDetected && isDetecting && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                  <div className="bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-gray-700/50 flex items-center gap-3 shadow-xl">
+                    <AlertCircle className="w-5 h-5 text-gray-400" />
+                    <span className="text-gray-300 text-sm font-medium">Position your face clearly in frame</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Starting spinner */}
+              {isStartingCamera && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/90 z-20 backdrop-blur-sm">
+                  <div className="w-12 h-12 rounded-full border-2 border-gray-600 border-t-blue-500 border-l-blue-500 animate-spin" />
+                  <p className="text-gray-300 font-medium">Starting camera & microphone...</p>
+                </div>
+              )}
+            </div>
+
+            {/* Right side: Questionnaire */}
+            <div className="flex-1 flex flex-col">
+              {currentQuestionIndex < QUESTIONS.length ? (
+                <div className="bg-gray-900/60 border border-gray-700/50 rounded-xl p-6 shadow-md transition-all flex-1 flex flex-col h-full relative">
+                  <div className="flex justify-between items-center mb-6">
+                    <span className="text-sm font-bold text-blue-400 tracking-wider uppercase">
+                      {QUESTIONS[currentQuestionIndex].title}
+                    </span>
+                    <span className="text-xs text-gray-400 font-medium bg-gray-800 px-3 py-1.5 rounded-full ring-1 ring-gray-700/50">
+                      {currentQuestionIndex + 1} / {QUESTIONS.length}
+                    </span>
+                  </div>
+                  
+                  <p className="text-xl text-white mb-auto font-medium leading-relaxed">
+                    {QUESTIONS[currentQuestionIndex].text}
+                  </p>
+                  
+                  <div className="flex flex-col items-center mt-10">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-blue-900/20 text-blue-400 text-sm rounded-full mb-6 border border-blue-900/30">
+                    <Mic className="w-4 h-4 animate-pulse" /> Speak your answer clearly
+                  </div>
+                  
+                  <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden mb-6">
+                    <div 
+                      className="h-full bg-blue-500 transition-all duration-500" 
+                      style={{ width: `${((currentQuestionIndex) / QUESTIONS.length) * 100}%` }}
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={() => {
+                      setCurrentQuestionIndex((prev) => prev + 1);
+                    }}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-6 text-lg shadow-lg shadow-green-900/20 font-semibold rounded-xl"
+                  >
+                    {currentQuestionIndex === QUESTIONS.length - 1 ? "Finish Assessment" : "Next Question"}
+                  </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gray-900/60 border border-gray-700/50 rounded-xl p-8 shadow-md flex flex-col items-center justify-center h-full text-center">
+                   <div className="w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+                     <RotateCcw className="w-8 h-8 text-green-400" />
+                   </div>
+                   <h3 className="text-xl font-bold text-white mb-2">Questions Complete!</h3>
+                   <p className="text-gray-400 text-sm mb-6">Please safely stop the camera when you are ready to view your results.</p>
+                </div>
+              )}
+            </div>
+            
           </div>
 
           {/* Error banners */}
