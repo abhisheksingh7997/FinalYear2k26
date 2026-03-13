@@ -7,3 +7,17 @@ mediapipe>=0.10.11
 deepface>=0.0.93
 numpy>=1.24.0
 tensorflow>=2.13.0
+
+tensorflow
+librosa
+numpy
+pandas
+scikit-learn
+matplotlib
+sounddevice
+soundfile
+scipy
+tqdm
+moviepy
+pyaudio
+flask
