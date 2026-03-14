@@ -9,13 +9,13 @@ export const UsageReports = () => {
   const generateExcelReport = () => {
     // Mock Data for the report
     const reportData = [
-      { Date: "2023-10-01", ActiveUsers: 145, AvgSessionMins: 12.4, HighStressDetections: 12, SystemUptimePct: 99.9 },
-      { Date: "2023-10-02", ActiveUsers: 162, AvgSessionMins: 14.1, HighStressDetections: 18, SystemUptimePct: 100.0 },
-      { Date: "2023-10-03", ActiveUsers: 134, AvgSessionMins: 11.2, HighStressDetections: 9,  SystemUptimePct: 99.8 },
-      { Date: "2023-10-04", ActiveUsers: 189, AvgSessionMins: 15.6, HighStressDetections: 24, SystemUptimePct: 100.0 },
-      { Date: "2023-10-05", ActiveUsers: 201, AvgSessionMins: 16.3, HighStressDetections: 31, SystemUptimePct: 99.9 },
-      { Date: "2023-10-06", ActiveUsers: 156, AvgSessionMins: 13.8, HighStressDetections: 15, SystemUptimePct: 100.0 },
-      { Date: "2023-10-07", ActiveUsers: 112, AvgSessionMins: 9.5,  HighStressDetections: 5,  SystemUptimePct: 100.0 },
+      { Date: "2025-10-01", ActiveUsers: 145, AvgSessionMins: 12.4, HighStressDetections: 12, SystemUptimePct: 99.9 },
+      { Date: "2025-10-02", ActiveUsers: 162, AvgSessionMins: 14.1, HighStressDetections: 18, SystemUptimePct: 100.0 },
+      { Date: "2025-10-03", ActiveUsers: 134, AvgSessionMins: 11.2, HighStressDetections: 9,  SystemUptimePct: 99.8 },
+      { Date: "2025-10-04", ActiveUsers: 189, AvgSessionMins: 15.6, HighStressDetections: 24, SystemUptimePct: 100.0 },
+      { Date: "2025-10-05", ActiveUsers: 201, AvgSessionMins: 16.3, HighStressDetections: 31, SystemUptimePct: 99.9 },
+      { Date: "2025-10-06", ActiveUsers: 156, AvgSessionMins: 13.8, HighStressDetections: 15, SystemUptimePct: 100.0 },
+      { Date: "2025-10-07", ActiveUsers: 112, AvgSessionMins: 9.5,  HighStressDetections: 5,  SystemUptimePct: 100.0 },
     ];
 
     // Create a new workbook and a worksheet from the JSON data
