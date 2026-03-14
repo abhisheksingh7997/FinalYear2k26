@@ -20,11 +20,17 @@ export function UserProfile() {
 
   useEffect(() => {
     if (user) {
-      setName(user.profile.name);
-      setEmail(user.email);
-      setAge(user.profile.age);
-      setOccupation(user.profile.occupation);
-      setDisease(user.profile.disease);
+      setName(user.profile?.name || "");
+      setEmail(user.email || "");
+      setAge(user.profile?.age || "");
+      setOccupation(user.profile?.occupation || "");
+      setDisease(user.profile?.disease || "");
+    } else {
+      setName("");
+      setEmail("");
+      setAge("");
+      setOccupation("");
+      setDisease("");
     }
   }, [user]);
 
