@@ -39,11 +39,19 @@ export function LoginForm({ onToggleMode, isLogin }: LoginFormProps) {
       return;
     }
 
-    if (!isLogin && !passwordRegex.test(password)) {
-      setError(
-        "Password must be at least 8 chars, include uppercase, lowercase, number, and special char"
-      );
-      return;
+    if (!isLogin) {
+      if (!passwordRegex.test(password)) {
+        setError(
+          "Password must be at least 8 chars, include uppercase, lowercase, number, and special char"
+        );
+        return;
+      }
+      
+      const ageNum = parseInt(age, 10);
+      if (isNaN(ageNum) || ageNum < 13 || ageNum > 50) {
+        setError("Age must be between 13 and 50");
+        return;
+      }
     }
 
     setLoading(true);
@@ -103,7 +111,20 @@ export function LoginForm({ onToggleMode, isLogin }: LoginFormProps) {
                   type="number"
                   placeholder="Age"
                   value={age}
-                  onChange={(e) => setAge(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setAge(val);
+                    if (val !== "") {
+                      const num = parseInt(val, 10);
+                      if (isNaN(num) || num < 13 || num > 50) {
+                        setError("Age must be between 13 and 50");
+                      } else if (error === "Age must be between 13 and 50") {
+                        setError("");
+                      }
+                    } else if (error === "Age must be between 13 and 50") {
+                      setError("");
+                    }
+                  }}
                   required
                 />
                 <Input

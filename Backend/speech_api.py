@@ -20,7 +20,7 @@ from collections import deque
 warnings.filterwarnings("ignore")
 
 # ── Config ────────────────────────────────────────────────────
-MODEL_PATH   = r"D:\Bhumika\College_Project\Data\Processed_data\speech_emotion_model.h5"
+MODEL_PATH   = r"E:\Finalyear2k26\FinalYear2k26\Model\speech_emotion_model.h5"
 PORT         = 8001
 SAMPLE_RATE  = 16000
 N_FEATURES   = 120

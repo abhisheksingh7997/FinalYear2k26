@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Circle,
   Brain,
@@ -13,6 +14,8 @@ import {
   Video,
   Mic,
   MicOff,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 // ── API Config ─────────────────────────────────────────────────
@@ -60,18 +63,128 @@ const TIPS_DATA = [
   { title: "🎯 Set Small Goals",        desc: "Completing small tasks builds motivation and gives a sense of achievement." },
 ];
 
-const QUESTIONS = [
-  { id: "q1", title: "Emotional State", text: "How would you describe your overall mood over the past few weeks?", options: ["Very positive", "Mostly positive", "Neutral", "Mostly negative", "Very negative"] },
-  { id: "q2", title: "Work Stress", text: "How often do you feel overwhelmed by your work responsibilities?", options: ["Never", "Rarely", "Sometimes", "Often", "Very often"] },
-  { id: "q3", title: "Energy Level", text: "Do you feel mentally or physically exhausted after a typical workday?", options: ["Never", "Rarely", "Sometimes", "Often", "Always"] },
-  { id: "q4", title: "Motivation", text: "How motivated do you feel when starting your daily work tasks?", options: ["Very motivated", "Somewhat motivated", "Neutral", "Unmotivated", "Very unmotivated"] },
-  { id: "q5", title: "Sleep Quality", text: "How often does stress or work-related thinking affect your sleep?", options: ["Never", "Rarely", "Sometimes", "Often", "Always"] },
-  { id: "q6", title: "Concentration", text: "Have you found it difficult to concentrate or stay focused recently?", options: ["Never", "Rarely", "Sometimes", "Often", "Always"] },
-  { id: "q7", title: "Emotional Control", text: "How often do you feel irritated, frustrated, or emotionally overwhelmed during work?", options: ["Never", "Rarely", "Sometimes", "Often", "Always"] },
-  { id: "q8", title: "Work-Life Balance", text: "Do you feel you have enough time and energy for life outside of work?", options: ["Always", "Mostly", "Sometimes", "Rarely", "Never"] },
-  { id: "q9", title: "Social Support", text: "When you feel stressed, do you feel comfortable talking about it with someone?", options: ["Always", "Mostly", "Sometimes", "Rarely", "Never"] },
-  { id: "q10", title: "Burnout Indicator", text: "Do you feel mentally refreshed after a break or weekend?", options: ["Always", "Mostly", "Sometimes", "Rarely", "Never"] },
+const TEEN_QUESTIONS = [
+  { id: "q1", title: "General Mood", text: "How have you been feeling most days recently?" },
+  { id: "q2", title: "School Stress", text: "Do you feel stressed or worried about school or exams?" },
+  { id: "q3", title: "Enjoyment", text: "Do you still enjoy the things you used to like?" },
+  { id: "q4", title: "Social Connection", text: "Have you been feeling lonely or left out?" },
+  { id: "q5", title: "Communication", text: "How comfortable are you talking to your friends or family?" },
+  { id: "q6", title: "Peer Pressure", text: "Do you feel pressured to fit in or meet expectations?" },
+  { id: "q7", title: "Sleep & Energy", text: "How is your sleep and energy level lately?" },
+  { id: "q8", title: "Irritability", text: "Do you get irritated or angry more easily than before?" },
+  { id: "q9", title: "Self-Confidence", text: "Do you feel confident about yourself and your abilities?" },
+  { id: "q10", title: "Overwhelm", text: "Have you ever felt so overwhelmed that you didn’t know what to do?" },
 ];
+
+const COLLEGE_QUESTIONS = [
+  { id: "q1", title: "Daily Responsibilities", text: "How are you managing your studies and daily responsibilities?" },
+  { id: "q2", title: "Future Anxiety", text: "Do you often feel anxious about your future or career?" },
+  { id: "q3", title: "Motivation", text: "How motivated do you feel to complete your tasks?" },
+  { id: "q4", title: "Balancing Life", text: "Do you feel overwhelmed balancing studies, social life, and expectations?" },
+  { id: "q5", title: "Relationships", text: "How are your relationships with friends or close people?" },
+  { id: "q6", title: "Peer Comparison", text: "Do you feel pressure to succeed or compare yourself with others?" },
+  { id: "q7", title: "Coping with Stress", text: "How do you usually cope with stress or setbacks?" },
+  { id: "q8", title: "Emotional Stability", text: "Do you feel emotionally stable or experience frequent mood swings?" },
+  { id: "q9", title: "Routine & Sleep", text: "How well are you sleeping and maintaining your routine?" },
+  { id: "q10", title: "Direction", text: "Have you been feeling stuck, hopeless, or directionless recently?" },
+];
+
+const ADULT_QUESTIONS = [
+  { id: "q1", title: "Work Stress", text: "How would you describe your current stress level at work?" },
+  { id: "q2", title: "Exhaustion", text: "Do you often feel mentally or physically exhausted?" },
+  { id: "q3", title: "Work-Life Balance", text: "Are you able to maintain a healthy work-life balance?" },
+  { id: "q4", title: "Outside Activities", text: "Do you still enjoy activities outside of work?" },
+  { id: "q5", title: "Managing Deadlines", text: "How well are you managing deadlines and responsibilities?" },
+  { id: "q6", title: "Support System", text: "Do you feel supported by colleagues, friends, or family?" },
+  { id: "q7", title: "Sleep Quality", text: "How is your sleep quality and relaxation time?" },
+  { id: "q8", title: "Frustration", text: "Do you feel irritable or frustrated more often than usual?" },
+  { id: "q9", title: "Life Satisfaction", text: "Do you feel satisfied with your current life and progress?" },
+  { id: "q10", title: "Burnout Risk", text: "Have you ever felt close to burnout or emotionally drained?" },
+];
+
+function getRecommendation(score: number) {
+  if (score <= 40) {
+    return {
+      color: "text-red-400",
+      bg: "bg-red-500/10",
+      border: "border-red-500/20",
+      title: "🔴 Critical Zone (0-40)",
+      interpretation: [
+        "Persistent low mood",
+        "High anxiety / overthinking",
+        "Sleep or appetite disturbance",
+        "Difficulty in daily functioning"
+      ],
+      recommendation: [
+        "Consult a mental health professional",
+        "Talk to a trusted person",
+        "Reduce workload/stressors",
+        "Track mood and sleep daily"
+      ],
+      message: "Your responses indicate significant emotional distress. It is highly recommended that you consult a mental health professional or doctor for proper guidance."
+    };
+  } else if (score <= 60) {
+    return {
+      color: "text-orange-400",
+      bg: "bg-orange-400/10",
+      border: "border-orange-400/20",
+      title: "🟠 Moderate Concern (41-60)",
+      interpretation: [
+        "Frequent stress or irritability",
+        "Low focus or motivation",
+        "Signs of burnout",
+        "Irregular sleep pattern"
+      ],
+      recommendation: [
+        "Fix daily routine (sleep + work)",
+        "Do physical activity (20–30 mins)",
+        "Share concerns with someone",
+        "Monitor for 2–3 weeks"
+      ],
+      message: "You may be experiencing moderate stress. Consider improving your routine, managing workload, and talking to someone you trust. If this persists, consider seeking professional advice."
+    };
+  } else if (score <= 80) {
+    return {
+      color: "text-yellow-400",
+      bg: "bg-yellow-400/10",
+      border: "border-yellow-400/20",
+      title: "🟡 Mild / Stable Zone (61-80)",
+      interpretation: [
+        "Occasional stress",
+        "Stable mood overall",
+        "Normal productivity",
+        "Good social interaction"
+      ],
+      recommendation: [
+        "Maintain routine",
+        "Exercise regularly",
+        "Limit screen time",
+        "Take weekly breaks"
+      ],
+      message: "Your mental state appears stable with mild stress levels. Continue maintaining a healthy lifestyle, regular sleep, and positive social interactions."
+    };
+  } else {
+    return {
+      color: "text-green-400",
+      bg: "bg-green-400/10",
+      border: "border-green-400/20",
+      title: "🟢 Healthy Zone (81-100)",
+      interpretation: [
+        "Positive mood",
+        "Good emotional balance",
+        "High engagement",
+        "Consistent energy"
+      ],
+      recommendation: [
+        "Continue current habits",
+        "Set personal goals",
+        "Maintain social connections",
+        "Take preventive breaks"
+      ],
+      message: "You seem to be in a healthy mental state. Keep up your positive habits and continue engaging in activities that support your well-being."
+    };
+  }
+}
 
 // ── Types ──────────────────────────────────────────────────────
 interface EmotionResponse {
@@ -131,11 +244,16 @@ function encodeWAV(samples: Float32Array, sampleRate: number, numChannels: numbe
 
 // ── Component ──────────────────────────────────────────────────
 export function LiveDetection() {
+  const { user } = useAuth();
+  const age = user?.profile?.age ? parseInt(user.profile.age, 10) : 30;
+  const QUESTIONS = age <= 17 ? TEEN_QUESTIONS : age <= 22 ? COLLEGE_QUESTIONS : ADULT_QUESTIONS;
+
   type ViewMode = "tips" | "instructions" | "camera" | "results";
 
   // View
   const [viewMode,   setViewMode]  = useState<ViewMode>("tips");
   const [activeTip,  setActiveTip] = useState<number | null>(null);
+  const [showRecommendations, setShowRecommendations] = useState(false);
 
   // Questionnaire
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -872,6 +990,70 @@ export function LiveDetection() {
               )}
             </div>
 
+          </div>
+
+          {/* Recommendations Dropdown */}
+          <div className="max-w-4xl mx-auto w-full mb-8">
+            <div className="border border-gray-700/50 rounded-xl overflow-hidden bg-gray-900/40">
+              <button
+                onClick={() => setShowRecommendations(!showRecommendations)}
+                className="w-full flex justify-between items-center p-4 hover:bg-gray-800/60 transition"
+              >
+                <div className="flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-blue-400"/>
+                  <span className="font-semibold text-gray-200">View Detailed Recommendation</span>
+                </div>
+                {showRecommendations ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+              </button>
+              
+              {showRecommendations && (() => {
+                const rec = getRecommendation(mhScore);
+                return (
+                  <div className="p-6 border-t border-gray-700/50 bg-gray-800/20">
+                    <div className={`p-5 rounded-xl border ${rec.bg} ${rec.border}`}>
+                      <h4 className={`text-lg font-bold mb-4 ${rec.color}`}>{rec.title}</h4>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">
+                            📌 Interpretation
+                          </p>
+                          <ul className="text-gray-200 text-sm space-y-1 pl-1">
+                            {rec.interpretation.map((item, idx) => (
+                              <li key={idx} className="flex items-start gap-2">
+                                <span className="text-blue-400 mt-0.5">•</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        <div>
+                          <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">
+                            💡 Recommendation
+                          </p>
+                          <ul className="text-gray-200 text-sm space-y-1 pl-1">
+                            {rec.recommendation.map((item, idx) => (
+                              <li key={idx} className="flex items-start gap-2">
+                                <span className="text-blue-400 mt-0.5">•</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        <div className="bg-black/30 p-4 rounded-lg mt-6 border border-white/5">
+                          <p className="text-xs text-green-400 uppercase tracking-wider font-bold mb-2">
+                            ✅ Message
+                          </p>
+                          <p className="text-gray-300 italic text-sm">"{rec.message}"</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
 
           {/* Action buttons */}
